@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SuppleSpark — Supplement Ad Concept Generator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --card-alt: #f5f5f7;
+      --border: rgba(0,0,0,0.08);
+      --text-primary: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #aeaeb2;
+      --accent: #0071e3;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --shadow-md: 0 8px 32px rgba(0,0,0,0.10);
+      --shadow-lg: 0 20px 60px rgba(0,0,0,0.13);
+      --transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
+      --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px; --radius-xl: 30px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text-primary); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 52px;
+      background: rgba(245,245,247,0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 9px; font-size: 17px; font-weight: 700; letter-spacing: -0.4px; color: var(--text-primary); text-decoration: none; }
+    .nav-logo-icon { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #30d158 0%, #0071e3 100%); display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .nav-pills { display: flex; gap: 4px; }
+    .nav-pill { font-size: 13px; font-weight: 500; color: var(--text-secondary); padding: 5px 14px; border-radius: 20px; cursor: pointer; transition: var(--transition); border: none; background: transparent; font-family: var(--font); }
+    .nav-pill:hover { background: rgba(0,0,0,0.05); color: var(--text-primary); }
+    .nav-pill.active { background: var(--accent); color: #fff; }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+    .nav-badge { font-size: 12px; font-weight: 600; color: var(--text-secondary); background: rgba(0,0,0,0.06); padding: 4px 12px; border-radius: 20px; }
+
+    /* ── HERO ── */
+    .hero { text-align: center; padding: 72px 24px 44px; position: relative; overflow: hidden; }
+    .hero-bg-blur {
+      position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 400px; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(48,209,88,0.12) 0%, rgba(0,113,227,0.08) 50%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #30d158; background: rgba(48,209,88,0.1); padding: 5px 14px; border-radius: 20px; margin-bottom: 22px; }
+    .hero-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #30d158; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+    .hero h1 { font-size: clamp(34px, 5.5vw, 62px); font-weight: 700; line-height: 1.06; letter-spacing: -1.5px; color: var(--text-primary); margin-bottom: 18px; position: relative; }
+    .hero h1 span { background: linear-gradient(135deg, #30d158 0%, #0071e3 55%, #af52de 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { font-size: 18px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 20px; line-height: 1.55; position: relative; }
+    .brand-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-bottom: 38px; }
+    .brand-chip { font-size: 12px; font-weight: 600; padding: 5px 13px; border-radius: 20px; background: rgba(0,0,0,0.05); color: var(--text-secondary); border: 1px solid var(--border); }
+
+    /* ── CATEGORY FILTER ── */
+    .category-filter { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+    .cat-btn { font-family: var(--font); font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 50px; border: 1.5px solid var(--border); background: var(--card); color: var(--text-secondary); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 6px; }
+    .cat-btn:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+    .cat-btn.active { border-color: transparent; color: #fff; }
+
+    /* ── GENERATE BUTTON ── */
+    .btn-generate {
+      position: relative; overflow: hidden;
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font); font-size: 17px; font-weight: 600; color: #fff;
+      background: linear-gradient(135deg, #30d158 0%, #0071e3 100%);
+      border: none; border-radius: 50px; padding: 16px 42px; cursor: pointer;
+      box-shadow: 0 4px 24px rgba(48,209,88,0.35);
+      transition: var(--transition); letter-spacing: -0.2px;
+    }
+    .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(48,209,88,0.42); }
+    .btn-generate:active { transform: translateY(0); }
+    .btn-generate svg { transition: transform 0.4s ease; }
+    .btn-generate:hover svg { transform: rotate(180deg); }
+
+    /* ── STATS ── */
+    .stats-row { display: flex; justify-content: center; gap: 44px; padding: 0 24px 56px; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-num { font-size: 30px; font-weight: 700; letter-spacing: -0.8px; color: var(--text-primary); }
+    .stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ── MAIN CONTAINER ── */
+    .container { max-width: 920px; margin: 0 auto; padding: 0 24px 100px; }
+
+    /* ── RESULT CARD ── */
+    .result-card { background: var(--card); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid var(--border); }
+    .card-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 26px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.015); }
+    .card-header-left { display: flex; align-items: center; gap: 12px; }
+    .card-dots { display: flex; gap: 7px; }
+    .card-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .card-dot:nth-child(1){background:#ff5f57} .card-dot:nth-child(2){background:#ffbd2e} .card-dot:nth-child(3){background:#28c840}
+    .card-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .card-header-actions { display: flex; gap: 8px; }
+    .btn-sm { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font); font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; transition: var(--transition); }
+    .btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+    .btn-outline:hover { background: var(--bg); color: var(--text-primary); }
+
+    .result-body { padding: 36px; }
+
+    /* Empty State */
+    .result-empty { text-align: center; padding: 64px 24px; }
+    .result-empty-icon { width: 80px; height: 80px; border-radius: 22px; background: linear-gradient(135deg, rgba(48,209,88,0.12), rgba(0,113,227,0.12)); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 38px; }
+    .result-empty h3 { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; letter-spacing: -0.3px; }
+    .result-empty p { font-size: 15px; color: var(--text-secondary); max-width: 340px; margin: 0 auto 16px; line-height: 1.6; }
+    .empty-brands { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .empty-brand { font-size: 12px; color: var(--text-tertiary); padding: 3px 10px; border-radius: 20px; background: rgba(0,0,0,0.04); border: 1px solid var(--border); }
+
+    /* Concept */
+    .result-concept { display: none; animation: fadeUp 0.45s cubic-bezier(0.4,0,0.2,1); }
+    .result-concept.visible { display: block; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Badges row */
+    .badges-row { display: flex; align-items: center; gap: 8px; margin-bottom: 26px; flex-wrap: wrap; }
+    .angle-badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px; border-radius: 50px; font-size: 13px; font-weight: 700; }
+    .angle-badge .bdot { width: 7px; height: 7px; border-radius: 50%; }
+    .category-badge { display: inline-flex; align-items: center; gap: 5px; padding: 6px 13px; border-radius: 50px; font-size: 12px; font-weight: 600; background: rgba(0,0,0,0.05); color: var(--text-secondary); }
+
+    /* Concept Sections */
+    .concept-section { margin-bottom: 22px; }
+    .concept-label { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 7px; }
+    .concept-value.hook { font-size: 23px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.28; color: var(--text-primary); }
+    .concept-value.strategy { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text-primary); }
+    .concept-desc { font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin-top: 5px; }
+    .concept-divider { height: 1px; background: var(--border); margin: 22px 0; }
+
+    /* Body Copy Block */
+    .body-copy-block { background: rgba(0,0,0,0.02); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; margin-bottom: 22px; }
+    .body-copy-text { font-size: 14px; color: var(--text-primary); line-height: 1.7; font-style: italic; }
+
+    /* Info Grid */
+    .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+    .info-pill { background: var(--card-alt); border-radius: var(--radius-sm); padding: 13px 15px; border: 1px solid var(--border); }
+    .info-pill-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 4px; }
+    .info-pill-value { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+
+    /* CTA Block */
+    .cta-block { border-radius: var(--radius-md); padding: 20px 22px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    .cta-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 4px; }
+    .cta-text { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
+    .cta-copy-btn { font-family: var(--font); font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.28); border-radius: 8px; padding: 9px 18px; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+    .cta-copy-btn:hover { background: rgba(255,255,255,0.28); }
+
+    /* Competitor Inspired */
+    .inspired-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-tertiary); padding: 5px 12px; border-radius: 20px; background: rgba(0,0,0,0.04); border: 1px solid var(--border); margin-bottom: 24px; }
+
+    /* ── ANGLES LIBRARY ── */
+    .section { padding: 0 0 80px; }
+    .section-header { text-align: center; margin-bottom: 40px; }
+    .section-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #30d158; margin-bottom: 10px; }
+    .section-header h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 700; letter-spacing: -0.8px; color: var(--text-primary); margin-bottom: 12px; }
+    .section-header p { font-size: 16px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; line-height: 1.55; }
+
+    .angles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(265px, 1fr)); gap: 14px; }
+    .angle-card { background: var(--card); border-radius: var(--radius-lg); padding: 22px; border: 1px solid var(--border); cursor: pointer; transition: var(--transition); box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
+    .angle-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--cs), var(--ce)); opacity: 0; transition: var(--transition); }
+    .angle-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .angle-card:hover::before { opacity: 1; }
+    .angle-card-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 13px; }
+    .angle-card h3 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; color: var(--text-primary); margin-bottom: 5px; }
+    .angle-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .angle-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--border); }
+    .angle-tag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+    .angle-strength { font-size: 12px; font-weight: 600; }
+
+    /* ── BRAND INSIGHTS ── */
+    .brands-section { padding: 0 0 80px; }
+    .brands-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .brand-card { background: var(--card); border-radius: var(--radius-md); padding: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+    .brand-card-name { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .brand-card-category { font-size: 12px; color: var(--text-tertiary); font-weight: 500; margin-bottom: 10px; }
+    .brand-card-angle { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text-primary); color: #fff; padding: 12px 22px; border-radius: 50px; font-size: 14px; font-weight: 600; box-shadow: var(--shadow-md); z-index: 999; display: flex; align-items: center; gap: 8px; opacity: 0; transition: all 0.35s cubic-bezier(0.4,0,0.2,1); pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    footer { text-align: center; padding: 28px 24px 48px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-tertiary); }
+
+    @media(max-width:640px){
+      nav { padding: 0 16px; } .nav-pills { display: none; }
+      .result-body { padding: 22px 18px; }
+      .info-grid { grid-template-columns: 1fr 1fr; }
+      .hero { padding: 48px 16px 32px; }
+      .container { padding: 0 16px 80px; }
+      .stats-row { gap: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-icon">💊</div>
+    SuppleSpark
+  </a>
+  <div class="nav-pills">
+    <button class="nav-pill active" onclick="scrollTo('generator',this)">Generator</button>
+    <button class="nav-pill" onclick="scrollTo('library',this)">Ad Angles</button>
+    <button class="nav-pill" onclick="scrollTo('brands',this)">Brand Intel</button>
+  </div>
+  <div class="nav-right">
+    <span class="nav-badge">Supplement Edition</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg-blur"></div>
+  <div class="hero-eyebrow">Supplement Ad Intelligence</div>
+  <h1>Win The<br/><span>Supplement Feed</span></h1>
+  <p>Generate scroll-stopping ad concepts inspired by the world's top supplement brands — Hims, AG1, David Protein, Viking, Supergut & more.</p>
+  <div class="brand-chips">
+    <span class="brand-chip">Hims / Hers</span><span class="brand-chip">AG1</span><span class="brand-chip">David Protein</span>
+    <span class="brand-chip">Viking</span><span class="brand-chip">Supergut</span><span class="brand-chip">Mars Man</span>
+    <span class="brand-chip">+O (Plus O)</span><span class="brand-chip">Madmaniq</span><span class="brand-chip">+ Your Brand</span>
+  </div>
+
+  <!-- Category Filter -->
+  <div class="category-filter">
+    <button class="cat-btn active" data-cat="all" onclick="setCategory('all',this)" style="border-color:#30d158;color:#30d158;background:rgba(48,209,88,0.08)">⚡ All Categories</button>
+    <button class="cat-btn" data-cat="performance" onclick="setCategory('performance',this)">💪 Performance & Protein</button>
+    <button class="cat-btn" data-cat="health" onclick="setCategory('health',this)">🌿 Daily Health & Greens</button>
+    <button class="cat-btn" data-cat="mens" onclick="setCategory('mens',this)">🔥 Men's Health</button>
+    <button class="cat-btn" data-cat="womens" onclick="setCategory('womens',this)">✨ Women's Wellness</button>
+    <button class="cat-btn" data-cat="gut" onclick="setCategory('gut',this)">🦠 Gut & Metabolism</button>
+    <button class="cat-btn" data-cat="longevity" onclick="setCategory('longevity',this)">🧬 Longevity & Brain</button>
+  </div>
+
+  <button class="btn-generate" onclick="generateConcept()" id="generateBtn">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+    Generate Ad Concept
+  </button>
+</div>
+
+<!-- STATS -->
+<div class="stats-row">
+  <div class="stat"><div class="stat-num">14</div><div class="stat-label">Ad Angles</div></div>
+  <div class="stat"><div class="stat-num">6</div><div class="stat-label">Categories</div></div>
+  <div class="stat"><div class="stat-num">80+</div><div class="stat-label">Hook Templates</div></div>
+  <div class="stat"><div class="stat-num">9</div><div class="stat-label">Brand Playbooks</div></div>
+</div>
+
+<!-- GENERATOR -->
+<div class="container" id="generator">
+  <div class="result-card">
+    <div class="card-header">
+      <div class="card-header-left">
+        <div class="card-dots"><div class="card-dot"></div><div class="card-dot"></div><div class="card-dot"></div></div>
+        <span class="card-title" id="cardTitle">Supplement Ad Generator</span>
+      </div>
+      <div class="card-header-actions">
+        <button class="btn-sm btn-outline" onclick="copyAll()" id="copyAllBtn" style="display:none">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy All
+        </button>
+        <button class="btn-sm btn-outline" onclick="generateConcept()" id="regenBtn" style="display:none">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          Regenerate
+        </button>
+      </div>
+    </div>
+
+    <div class="result-body">
+      <!-- Empty State -->
+      <div class="result-empty" id="emptyState">
+        <div class="result-empty-icon">💊</div>
+        <h3>Ready to dominate the feed?</h3>
+        <p>Select a category above (or leave on All), then hit Generate to get a data-driven supplement ad concept in seconds.</p>
+        <div class="empty-brands" style="margin-top:16px">
+          <span class="empty-brand">Hims</span><span class="empty-brand">AG1</span><span class="empty-brand">David Protein</span>
+          <span class="empty-brand">Viking</span><span class="empty-brand">Supergut</span><span class="empty-brand">Madmaniq</span>
+          <span class="empty-brand">Mars Man</span><span class="empty-brand">+O</span>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div class="result-concept" id="conceptResult">
+        <div class="inspired-badge" id="inspiredBadge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <span id="inspiredText">Inspired by Hims playbook</span>
+        </div>
+
+        <!-- Badges -->
+        <div class="badges-row">
+          <div class="angle-badge" id="angleBadge">
+            <span class="bdot" id="bdot"></span>
+            <span id="angleName">Transformation</span>
+          </div>
+          <div class="category-badge" id="catBadge">💪 Performance</div>
+        </div>
+
+        <!-- Hook -->
+        <div class="concept-section">
+          <div class="concept-label">Scroll-Stopping Hook</div>
+          <div class="concept-value hook" id="hookText"></div>
+          <div class="concept-desc" id="hookDesc"></div>
+        </div>
+
+        <div class="concept-divider"></div>
+
+        <!-- Body Copy Direction -->
+        <div class="concept-section">
+          <div class="concept-label">Body Copy Direction</div>
+          <div class="body-copy-block">
+            <div class="body-copy-text" id="bodyText"></div>
+          </div>
+        </div>
+
+        <!-- Angle Strategy -->
+        <div class="concept-section">
+          <div class="concept-label">Ad Angle Strategy</div>
+          <div class="concept-value strategy" id="angleStrategy"></div>
+          <div class="concept-desc" id="angleDesc"></div>
+        </div>
+
+        <!-- Info Pills -->
+        <div class="info-grid">
+          <div class="info-pill"><div class="info-pill-label">Format</div><div class="info-pill-value" id="adFormat"></div></div>
+          <div class="info-pill"><div class="info-pill-label">Platform</div><div class="info-pill-value" id="adPlatform"></div></div>
+          <div class="info-pill"><div class="info-pill-label">Audience</div><div class="info-pill-value" id="adAudience"></div></div>
+          <div class="info-pill"><div class="info-pill-label">Tone</div><div class="info-pill-value" id="adTone"></div></div>
+        </div>
+
+        <div class="concept-divider"></div>
+
+        <!-- CTA -->
+        <div class="cta-block" id="ctaBlock">
+          <div>
+            <div class="cta-label">Call To Action</div>
+            <div class="cta-text" id="ctaText"></div>
+          </div>
+          <button class="cta-copy-btn" onclick="copyCTA()">Copy CTA</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ANGLES LIBRARY -->
+<div class="container section" id="library">
+  <div class="section-header">
+    <div class="section-eyebrow">Proven Playbooks</div>
+    <h2>Supplement Ad Angles</h2>
+    <p>14 battle-tested psychological angles used by the fastest-growing supplement brands on the planet.</p>
+  </div>
+  <div class="angles-grid" id="anglesGrid"></div>
+</div>
+
+<!-- BRAND INTEL -->
+<div class="container brands-section" id="brands">
+  <div class="section-header">
+    <div class="section-eyebrow">Competitive Intelligence</div>
+    <h2>Brand Playbooks</h2>
+    <p>The signature ad strategies behind today's top supplement brands.</p>
+  </div>
+  <div class="brands-grid" id="brandsGrid"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+  <span id="toastMsg">Copied!</span>
+</div>
+
+<footer>Made with 💊 SuppleSpark &nbsp;·&nbsp; Supplement Ad Intelligence Platform</footer>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════════════════════
+
+const BRAND_INTEL = [
+  { name: 'Hims', category: 'Men\'s Health', signature: 'Clinical Credibility + Destigmatization', angle: 'Authority + Pain Point', color: '#0071e3', bg: 'rgba(0,113,227,0.08)' },
+  { name: 'Hers', category: 'Women\'s Wellness', signature: 'Empowerment + Gentle Authority', angle: 'Identity + Trust', color: '#af52de', bg: 'rgba(175,82,222,0.08)' },
+  { name: 'AG1', category: 'Daily Health', signature: 'Daily Ritual + Lifestyle Aspiration', angle: 'Identity + Value Stack', color: '#30d158', bg: 'rgba(48,209,88,0.08)' },
+  { name: 'David Protein', category: 'Performance', signature: 'Extreme Simplicity + Protein Purity', angle: 'Novelty + Science', color: '#ff9f0a', bg: 'rgba(255,159,10,0.08)' },
+  { name: 'Viking', category: 'Men\'s Performance', signature: 'Primal Masculinity + Results-First', angle: 'Identity + Transformation', color: '#ff3b30', bg: 'rgba(255,59,48,0.08)' },
+  { name: 'Supergut', category: 'Gut Health', signature: 'Science-Backed Curiosity + Doctor Trust', angle: 'Curiosity + Authority', color: '#32ade6', bg: 'rgba(50,173,230,0.08)' },
+  { name: 'Mars Man', category: 'Men\'s Vitality', signature: 'Performance Optimisation + Edge', angle: 'Pain Point + Urgency', color: '#ff6b00', bg: 'rgba(255,107,0,0.08)' },
+  { name: '+O', category: 'Longevity', signature: 'Biohacking + Exclusive Innovation', angle: 'Novelty + Authority', color: '#5e5ce6', bg: 'rgba(94,92,230,0.08)' },
+  { name: 'Madmaniq', category: 'Cognitive', signature: 'Productivity Culture + Brain Performance', angle: 'Pain Point + Identity', color: '#ff2d55', bg: 'rgba(255,45,85,0.08)' },
+];
+
+const AD_ANGLES = [
+  // ── PERFORMANCE & PROTEIN ────────────────────────────────────
+  {
+    id: 'clean_protein', name: 'Clean Protein Truth', emoji: '🥩', cat: 'performance',
+    color: '#ff9f0a', light: 'rgba(255,159,10,0.10)', gs: '#ff9f0a', ge: '#ff6b00',
+    tag: 'David Protein Style', tagBg: 'rgba(255,159,10,0.12)', tagC: '#a86800',
+    stars: '★★★★★', desc: 'Expose dirty protein secrets. Position your product as the clean, honest alternative with just the ingredients that matter.',
+    strategy: 'Ingredient Transparency Attack', stratDesc: 'The modern supplement buyer is ingredient-literate. Lead with what you DON\'T have (fillers, artificial sweeteners, mystery blends) before showcasing what you DO have. Inspired by David Protein\'s "nothing but protein" positioning.',
+    brands: ['David Protein', 'Levels', 'Momentous'],
+    hooks: [
+      { text: 'Your protein powder has 26 ingredients. Ours has 4.', desc: 'Brutal simplicity contrast — makes the competition look unnecessarily complex and your product obvious.', body: 'Most protein powders are 30% filler, 20% artificial flavor, and 10% hope. We got obsessed with the math. What if you only put in what actually builds muscle? [X]g of protein. That\'s it. No BS, no bloat, no fine print.' },
+      { text: 'We removed everything that doesn\'t build muscle. Here\'s what\'s left.', desc: 'Reverse-engineering trust — starts with what was eliminated rather than what was added.', body: 'No gums. No sucralose. No "proprietary blend" that hides dosages. We started with one question: what actually builds muscle? Everything else got cut. What remains is the cleanest protein on the market.' },
+      { text: '47g of protein per serving. 0g of excuses.', desc: 'Hard number + attitude = premium positioning that attracts serious athletes.', body: 'If you train like your life depends on it, your protein should match that energy. No fluff. No underdosing. Just the highest protein density per calorie we could engineer. Built for people who actually track their macros.' },
+      { text: 'Read the label on your protein. We\'ll wait. Now read ours.', desc: 'Invitation to comparison — works beautifully in feed where curiosity drives the tap.', body: 'We dare you to compare. Pull out whatever protein is in your cabinet right now. Count the ingredients you can\'t pronounce. Now look at ours: [X] ingredients. All real. All earned.' },
+    ],
+    ctas: ['Get Clean Protein', 'See the Ingredients', 'Try the Clean Formula', 'Build With Real Protein'],
+    formats: ['Static Comparison', 'Short Video', 'Carousel'], platforms: ['Instagram', 'TikTok', 'Facebook'], audiences: ['Gym-Goers', 'Macro Trackers', 'Clean Label Shoppers'], tones: ['Direct', 'Bold', 'No-BS']
+  },
+  {
+    id: 'gains', name: 'Performance Results', emoji: '💪', cat: 'performance',
+    color: '#ff3b30', light: 'rgba(255,59,48,0.10)', gs: '#ff3b30', ge: '#ff9f0a',
+    tag: 'Viking Style', tagBg: 'rgba(255,59,48,0.12)', tagC: '#a81e00',
+    stars: '★★★★★', desc: 'Before/after performance stories backed by specific, measurable outcomes. Real numbers, real people.',
+    strategy: 'Measurable Performance Proof', stratDesc: 'Lead with a specific, quantifiable performance metric. Don\'t say "more energy" — say "+23% on my deadlift in 6 weeks." Numbers create credibility and give the brain a concrete anchor to imagine achieving the same result.',
+    brands: ['Viking', 'Optimum Nutrition', 'Mars Man'],
+    hooks: [
+      { text: 'I added 40 lbs to my squat in 8 weeks. This is the only thing I changed.', desc: 'Hyper-specific number + single variable = maximum curiosity and credibility.', body: 'Same program. Same sleep. Same diet. The only thing different was adding [Product] to my pre-workout stack. Week 1 felt different. Week 8 I hit numbers I hadn\'t touched in years. This is not a drill.' },
+      { text: 'My coach asked what I was on. I told him: recovery.', desc: 'Implies dramatic results without making drug insinuations — smart angle for natural supplements.', body: 'You can out-train anyone. But you can\'t out-train bad recovery. [Product] was built to close the gap between your sessions — so every workout compounds instead of just costing you.' },
+      { text: 'Week 1: skeptical. Week 4: obsessed. Week 8: sending this to everyone.', desc: 'Timeline progression mirrors how real buyers experience supplements — deeply relatable.', body: 'I\'ve tried enough supplements to fill a garage. Most end up in the bin after two weeks. [Product] ended up on my nightstand, my gym bag, and my Amazon re-order list. This is the one.' },
+      { text: 'My PR from last year is now my warm-up weight.', desc: 'Dramatic performance leap expressed in a casual, confident way — aspiration without bragging.', body: 'The difference between a plateau and a breakthrough is usually recovery, not effort. Most athletes are overtrained and under-recovered. [Product] fixed the half of the equation most people ignore.' },
+    ],
+    ctas: ['Start Performing', 'Unlock My Results', 'Get the Edge', 'Train Harder, Recover Faster'],
+    formats: ['UGC Video', 'Before/After', 'Testimonial'], platforms: ['Instagram', 'TikTok', 'YouTube'], audiences: ['Athletes', 'Gym Bros', 'Weekend Warriors'], tones: ['Intense', 'Motivational', 'Raw']
+  },
+
+  // ── DAILY HEALTH & GREENS ────────────────────────────────────
+  {
+    id: 'daily_ritual', name: 'Daily Ritual Upgrade', emoji: '🌅', cat: 'health',
+    color: '#30d158', light: 'rgba(48,209,88,0.10)', gs: '#30d158', ge: '#0071e3',
+    tag: 'AG1 Playbook', tagBg: 'rgba(48,209,88,0.12)', tagC: '#1a7a32',
+    stars: '★★★★★', desc: 'Position the supplement as the keystone habit of high-performers. One daily ritual that replaces 10 products.',
+    strategy: 'Daily Ritual & Simplification', stratDesc: 'AG1\'s genius was selling a morning ritual, not a product. Frame your supplement as the single foundational habit that unlocks a better version of everyday life. Speak to routine-builders and simplifiers.',
+    brands: ['AG1', 'Athletic Greens', 'Ritual'],
+    hooks: [
+      { text: 'I stopped taking 9 supplements and replaced them with 1. My bloodwork has never looked better.', desc: 'Simplification narrative + health outcome evidence = AG1\'s entire brand in one sentence.', body: 'The supplement cabinet was getting embarrassing. Fish oil, vitamin D, B12, magnesium, zinc, probiotics… I was spending $200/month and couldn\'t even remember if I\'d taken them. [Product] replaced all of it. One scoop. Every morning. Done.' },
+      { text: 'My morning routine has 3 steps. This is step one.', desc: 'Lifestyle integration — the product becomes part of identity, not just a purchase.', body: 'High-performers obsess over their morning. Not because of hustle culture — because what you do in the first 30 minutes sets the chemical tone for your entire day. [Product] is how I start mine. Every single day.' },
+      { text: 'What if your "healthy" habits were just expensive noise?', desc: 'Provocative reframe — challenges existing habits and positions the product as the smarter choice.', body: 'Most people\'s supplement routine is built on old marketing, not science. [Product] was formulated by starting at the research and working backward. 75 ingredients. One goal: make every system in your body work better.' },
+      { text: 'The 60-second habit that changed my energy, digestion, and focus.', desc: 'Specific time investment + three concrete benefits = clicks from people who want all three.', body: 'You can spend hours biohacking your sleep, your diet, and your workouts. Or you can spend 60 seconds on the one thing that makes all of it work better. [Product] is the foundation, not the feature.' },
+    ],
+    ctas: ['Start My Daily Ritual', 'Replace My Stack', 'Try One Scoop Free', 'Simplify My Health'],
+    formats: ['Lifestyle Video', 'UGC Morning Routine', 'Flat Lay Photo'], platforms: ['Instagram', 'YouTube', 'Facebook'], audiences: ['High-Performers', 'Biohackers', 'Health-Conscious Adults'], tones: ['Premium', 'Aspirational', 'Calm']
+  },
+  {
+    id: 'energy_drain', name: 'Energy & Fatigue Fix', emoji: '⚡', cat: 'health',
+    color: '#ff9f0a', light: 'rgba(255,159,10,0.10)', gs: '#ff9f0a', ge: '#30d158',
+    tag: 'High Volume Angle', tagBg: 'rgba(255,159,10,0.12)', tagC: '#a86800',
+    stars: '★★★★☆', desc: 'Target the universal "constant tiredness" pain point. Position your product as the fix modern medicine ignores.',
+    strategy: 'Fatigue & Energy Narrative', stratDesc: 'Constant fatigue is the #1 unsolved health complaint in adults 25–45. Validate the frustration, identify the root cause (nutrient deficiency, poor gut absorption, etc.), and position your supplement as the missing piece.',
+    brands: ['AG1', 'Ritual', 'Madmaniq'],
+    hooks: [
+      { text: 'If you\'re tired all the time, it\'s probably not laziness. It\'s deficiency.', desc: 'Removes shame and reframes the problem as a solvable nutritional issue.', body: 'Doctors check for disease. Nobody checks for "operating at 60%." Subclinical deficiencies in magnesium, B12, and iron can drain your energy without ever showing up on a standard blood panel. [Product] fills the gaps.' },
+      { text: 'I used to need 3 coffees before noon. Now I need 1. What changed?', desc: 'Concrete before/after using a relatable behavior (coffee dependency) as the metric.', body: 'The coffee wasn\'t the problem. The coffee was the symptom. My body was running on empty — good nutrition-wise, terrible at the micronutrient level. [Product] fixed what I didn\'t know was broken.' },
+      { text: 'POV: you wake up already exhausted. Here\'s what nobody tells you.', desc: 'TikTok-native format addressing the frustrated morning person.', body: 'Waking up tired despite 8 hours of sleep usually comes down to three things: gut health, mineral absorption, and inflammation. [Product] was formulated specifically for this. Most people feel different in 2 weeks.' },
+      { text: 'Your body is running Chrome with 47 tabs open. Time to close some.', desc: 'Hilarious modern metaphor that immediately resonates with the exhausted digital generation.', body: 'Your immune system, your hormones, your gut bacteria — they\'re all competing for the same nutrients. And if you\'re eating like most people, they\'re all losing. [Product] gives your body what it needs to run clean.' },
+    ],
+    ctas: ['Fix My Energy', 'Stop Being Tired', 'Try the Fix', 'Get My Energy Back'],
+    formats: ['Short Video', 'UGC', 'Static + Copy'], platforms: ['TikTok', 'Facebook', 'Instagram'], audiences: ['Adults 25-45', 'Parents', 'Busy Professionals'], tones: ['Empathetic', 'Relatable', 'Solution-First']
+  },
+
+  // ── MEN'S HEALTH ────────────────────────────────────────────
+  {
+    id: 'mens_vitality', name: 'Men\'s Vitality Revival', emoji: '🔥', cat: 'mens',
+    color: '#ff6b00', light: 'rgba(255,107,0,0.10)', gs: '#ff6b00', ge: '#ff3b30',
+    tag: 'Hims / Mars Man Style', tagBg: 'rgba(255,107,0,0.12)', tagC: '#a84800',
+    stars: '★★★★★', desc: 'Address declining testosterone, energy, and drive with clinical authority while removing stigma.',
+    strategy: 'Destigmatized Men\'s Health', stratDesc: 'Hims cracked the code: make men\'s intimate health conversations normal. Lead with empathy, not shame. Validate the frustration (low energy, declining drive, brain fog) as a biological reality — not a personal failure. Then position the product as the clinical solution.',
+    brands: ['Hims', 'Mars Man', 'Viking', 'Nugenix'],
+    hooks: [
+      { text: 'Low T is not a character flaw. It\'s a hormone. Here\'s what to do.', desc: 'Destigmatization + reframing as a solvable clinical issue — directly mirrors Hims\' brand voice.', body: 'After 30, testosterone drops about 1% per year. That\'s not weakness — that\'s biology. The fog, the fatigue, the flat motivation — it\'s not in your head. It\'s in your bloodwork. [Product] was built for this exact problem.' },
+      { text: 'I felt like a different person at 35 than I did at 25. Then I found out why.', desc: 'Relatable identity shift that every man in his 30s will recognize immediately.', body: 'The gym sessions got harder. The recovery got longer. The drive at work — and at home — started dimming. I thought it was stress. Turns out it was hormones. [Product] gave me a way to fight back naturally, without prescriptions.' },
+      { text: 'Your drive didn\'t disappear. It got buried under years of cortisol and bad sleep.', desc: 'Scientific framing removes shame and gives men a rational explanation for what they\'re feeling.', body: 'Modern men are running on cortisol overdrive and chronically underfueled. That combo tanks testosterone, wrecks sleep, and drains motivation. [Product] was formulated to interrupt that cycle and help you get back to baseline.' },
+      { text: 'What if "feeling like yourself again" was a 30-day protocol away?', desc: 'Hope-based framing with a concrete time horizon — removes the "this will take forever" objection.', body: 'Most men don\'t even realize how far from baseline they\'ve drifted until something snaps them back. [Product] is that thing. We hear it constantly: "I forgot what it felt like to feel like this."' },
+    ],
+    ctas: ['Start the Protocol', 'Reclaim My Drive', 'Try 30 Days Free', 'Get Back to Baseline'],
+    formats: ['Direct Response Video', 'UGC Testimonial', 'Static Ad'], platforms: ['Facebook', 'Instagram', 'YouTube'], audiences: ['Men 30-55', 'Fitness-Focused Men', 'Biohackers'], tones: ['Empathetic', 'Clinical', 'Aspirational']
+  },
+  {
+    id: 'primal', name: 'Primal Masculinity', emoji: '⚔️', cat: 'mens',
+    color: '#ff3b30', light: 'rgba(255,59,48,0.10)', gs: '#ff3b30', ge: '#5e5ce6',
+    tag: 'Viking Playbook', tagBg: 'rgba(255,59,48,0.12)', tagC: '#a81e00',
+    stars: '★★★★☆', desc: 'Speak to the warrior archetype. Strength, resilience, dominance. No apologies, no softening.',
+    strategy: 'Warrior Identity & Primal Drive', stratDesc: 'Viking sells an archetype, not a supplement. Position your product as the weapon of elite men who refuse to accept average. This angle works best with identity-driven buyers who see supplements as part of who they ARE, not just what they take.',
+    brands: ['Viking', 'Mars Man', 'Alpha Lion'],
+    hooks: [
+      { text: 'Average is contagious. So is excellence. Choose your supplement accordingly.', desc: 'Identity-based provocation — forces the reader to place themselves in a camp.', body: 'Most guys settle. Same body. Same energy. Same ceiling. A few don\'t. [Product] wasn\'t made for the first group. It was made for the men who are physically incapable of coasting. Welcome to your weapon.' },
+      { text: 'Your ancestors didn\'t have supplements. They also didn\'t sit at a desk for 10 hours.', desc: 'Wry humor that validates the modern man\'s unique challenge while positioning the product as the solution.', body: 'The modern world is a metabolic disaster. Stress hormones are chronically elevated. Natural movement is gone. Nutrient density in food has dropped 30% in 50 years. [Product] was built to bridge the gap between the life you have and the body you were designed for.' },
+      { text: 'You don\'t need motivation. You need fuel.', desc: 'Reframes the mindset vs. biochemistry debate — supplements as the missing tactical edge.', body: 'Motivation is a feeling. Fuel is chemistry. When your testosterone, cortisol, and mitochondrial function are optimized, "motivation" isn\'t a question anymore. You just go. [Product] handles the chemistry. You handle the rest.' },
+      { text: 'There\'s a reason elite operators don\'t skip their stack. Neither should you.', desc: 'Authority by association — military/operator culture is deeply aspirational for performance men.', body: 'Special Forces operators. Professional fighters. Competitive athletes. They share one thing in common: they treat supplementation as non-negotiable. Not because it\'s trendy. Because it works. [Product] is their level.' },
+    ],
+    ctas: ['Get My Weapon', 'Claim the Edge', 'Fuel the Machine', 'Join the Few'],
+    formats: ['Cinematic Video', 'Dark Aesthetic Photo', 'UGC'], platforms: ['Instagram', 'YouTube', 'TikTok'], audiences: ['Alpha Archetype', 'Combat Sports', 'Competitive Athletes'], tones: ['Intense', 'Bold', 'No-Compromise']
+  },
+
+  // ── WOMEN'S WELLNESS ────────────────────────────────────────
+  {
+    id: 'womens_glow', name: 'Women\'s Inside-Out Glow', emoji: '✨', cat: 'womens',
+    color: '#af52de', light: 'rgba(175,82,222,0.10)', gs: '#af52de', ge: '#ff2d55',
+    tag: 'Hers Playbook', tagBg: 'rgba(175,82,222,0.12)', tagC: '#7a3098',
+    stars: '★★★★★', desc: 'Beauty begins in the gut, the hormones, the mitochondria. Position supplements as the intelligent woman\'s beauty strategy.',
+    strategy: 'Inside-Out Beauty & Wellness', stratDesc: 'The modern wellness woman knows that topical skincare only goes so far. Lead with the science of beauty from within — collagen synthesis, gut microbiome, hormonal balance. This angle attracts buyers who feel underserved by the beauty industry.',
+    brands: ['Hers', 'Ritual', 'HUM Nutrition', 'Vital Proteins'],
+    hooks: [
+      { text: 'Your skin is a reflection of your gut. And your gut is crying for help.', desc: 'Provocative gut-skin connection — supported by science and deeply resonant with beauty-conscious women.', body: 'The $200 serum can\'t fix what\'s happening underneath. Inflammation, leaky gut, and hormonal imbalance show up on your face before they show up anywhere else. [Product] works where serums can\'t reach.' },
+      { text: 'I stopped focusing on my skin. I started focusing on my body. My skin followed.', desc: 'Counter-intuitive insight that reframes the entire beauty conversation.', body: 'Collagen production. Gut barrier integrity. Inflammation markers. These aren\'t beauty words — but they should be. [Product] was formulated by women who got tired of treating symptoms and started treating root causes.' },
+      { text: 'What if glowing skin was a nutrient deficiency problem?', desc: 'Curiosity gap + a novel reframe of a problem every woman has thought about.', body: 'Zinc for breakouts. Silica for hair and nails. Omega-3s for skin hydration. Probiotics for the gut-skin axis. Most women are missing all of these. [Product] is the easiest way to change that.' },
+      { text: 'She looks incredible. She\'s 44. Her secret is internal, not topical.', desc: 'Aspirational age-defiance narrative that speaks to women who want to age beautifully and intelligently.', body: 'The women who look 10 years younger than their age aren\'t doing something weird. They\'re doing something foundational. Anti-inflammatory nutrition. Gut health. Collagen support. [Product] is the stack that makes it simple.' },
+    ],
+    ctas: ['Glow From Within', 'Start the Ritual', 'My Skin Journey Starts Here', 'Shop Women\'s Formula'],
+    formats: ['Lifestyle Photo', 'Before/After Video', 'UGC Story'], platforms: ['Instagram', 'Pinterest', 'TikTok'], audiences: ['Women 25-45', 'Beauty-Conscious', 'Wellness Curious'], tones: ['Empowering', 'Intelligent', 'Warm']
+  },
+  {
+    id: 'hormonal_balance', name: 'Hormonal Balance', emoji: '🌸', cat: 'womens',
+    color: '#ff2d55', light: 'rgba(255,45,85,0.10)', gs: '#ff2d55', ge: '#af52de',
+    tag: 'Growing Category', tagBg: 'rgba(255,45,85,0.12)', tagC: '#a81e38',
+    stars: '★★★★☆', desc: 'Address the cycle, mood, energy and hormonal fluctuations that affect millions of women — without clinical coldness.',
+    strategy: 'Hormone-Aware Wellness', stratDesc: 'Hormonal health is one of the least-served categories in supplements. Lead with validation ("you\'re not crazy, it\'s hormones"), then offer a natural, science-backed solution. Avoid clinical coldness — speak like a knowledgeable best friend.',
+    brands: ['Hers', 'Beekeeper\'s Naturals', 'Seed'],
+    hooks: [
+      { text: 'That 2pm crash, the mood swings, the restless sleep — it\'s not stress. It\'s your cortisol.', desc: 'Naming and labeling common female experiences with a biological cause removes shame and creates instant recognition.', body: 'Women\'s hormones are complex — and most supplements weren\'t designed for them. [Product] was formulated specifically for the female hormonal cycle, helping manage cortisol, support progesterone production, and stabilize mood and energy throughout the month.' },
+      { text: 'I thought I was just emotional. Turns out I was just undernourished.', desc: 'Powerful destigmatization — reframes "emotional" as a nutritional state, not a character trait.', body: 'Magnesium deficiency alone can cause anxiety, irritability, and sleep issues in 70% of women. Add vitamin D, B6, and adaptogens to the list. [Product] gives your nervous system what it needs to stop overreacting to everything.' },
+      { text: 'Your cycle is not the enemy. Your nutrition is just not supporting it.', desc: 'Empowering reframe that positions the product as cycle harmony, not cycle suppression.', body: 'Built around the four phases of the female cycle, [Product] adapts to what your body actually needs each week — not a one-size-fits-all formula designed for men and relabeled pink.' },
+      { text: 'If your doctor can\'t explain why you feel this way — this might.', desc: 'Speaks to the frustrated woman who has been dismissed by conventional medicine.', body: 'Subclinical hormonal imbalances don\'t show up on standard blood panels. But they show up in your daily life. [Product] addresses the most common nutritional gaps linked to hormonal disruption — the ones most doctors never test for.' },
+    ],
+    ctas: ['Balance Starts Here', 'Support My Cycle', 'Shop the Women\'s Formula', 'Start Feeling Better'],
+    formats: ['Video Story', 'Empathy-Led Static', 'UGC Review'], platforms: ['Instagram', 'TikTok', 'Pinterest'], audiences: ['Women 22-40', 'Cycle-Aware Women', 'Hormone Curious'], tones: ['Empathetic', 'Science-Backed', 'Empowering']
+  },
+
+  // ── GUT & METABOLISM ────────────────────────────────────────
+  {
+    id: 'gut_science', name: 'Gut Health Science', emoji: '🦠', cat: 'gut',
+    color: '#32ade6', light: 'rgba(50,173,230,0.10)', gs: '#32ade6', ge: '#30d158',
+    tag: 'Supergut Style', tagBg: 'rgba(50,173,230,0.12)', tagC: '#0a6d94',
+    stars: '★★★★★', desc: 'Translate complex gut science into a simple, urgent consumer message. The gut is the root of everything.',
+    strategy: 'Gut-First Science Simplification', stratDesc: 'Supergut\'s genius is making the microbiome approachable. Lead with a surprising gut-health fact (that connects to something the buyer cares about — weight, skin, mood, immunity), then provide the product as the simple fix. Make science feel like insider knowledge.',
+    brands: ['Supergut', 'Seed', 'Pendulum', 'Ritual'],
+    hooks: [
+      { text: '70% of your immune system lives in your gut. Are you feeding it or ignoring it?', desc: 'Stat + confrontational question that triggers both curiosity and mild guilt.', body: 'The trillions of bacteria in your gut don\'t just digest food. They manufacture neurotransmitters, regulate hormones, and control your immune response. Most people are starving them. [Product] is the simplest way to fix that — and the science backs every strain.' },
+      { text: 'Your gut bacteria are either working for you or against you right now. Know which?', desc: 'Creates mild anxiety about something the buyer can\'t see — powerful trigger for gut health supplements.', body: 'Modern diet, chronic stress, antibiotics, alcohol — they\'re all devastating your microbiome. And an imbalanced gut shows up as bloating, fatigue, brain fog, weight gain, and poor immunity. [Product] re-establishes the balance your gut lost.' },
+      { text: 'Scientists now call the gut the "second brain." Your second brain is starving.', desc: 'Authority framing using genuine neuroscience — the gut-brain axis is a legitimate, compelling hook.', body: 'The gut-brain axis is real, researched, and mostly ignored. 95% of your serotonin is made in your gut. If your gut bacteria are off, your mood, focus, and stress response go with them. [Product] is clinically studied to restore the specific strains linked to mental clarity and emotional resilience.' },
+      { text: 'I fixed my skin, my mood, and my bloating. I only changed one thing.', desc: 'Three benefits, one product — maximum perceived value in minimum words.', body: 'After years of trying everything for my digestion, a functional medicine doctor told me to stop treating symptoms and fix my microbiome. [Product] was her recommendation. 30 days later, the bloating was gone. 60 days later, so was the brain fog. And my skin? Completely different.' },
+    ],
+    ctas: ['Feed Your Gut', 'Fix from Within', 'Try the Microbiome Fix', 'Start 30-Day Protocol'],
+    formats: ['Explainer Video', 'Scientific Static', 'UGC Story'], platforms: ['Facebook', 'Instagram', 'YouTube'], audiences: ['Health-Curious Adults', 'IBS Sufferers', 'Bloat-Conscious'], tones: ['Scientific', 'Accessible', 'Solution-Oriented']
+  },
+  {
+    id: 'metabolism', name: 'Metabolism & Weight', emoji: '🔬', cat: 'gut',
+    color: '#30d158', light: 'rgba(48,209,88,0.10)', gs: '#30d158', ge: '#32ade6',
+    tag: 'Science-First', tagBg: 'rgba(48,209,88,0.12)', tagC: '#1a7a32',
+    stars: '★★★★☆', desc: 'Attack the metabolism narrative with root-cause science — not calorie counting, but cellular function.',
+    strategy: 'Metabolic Health Re-Education', stratDesc: 'Shift the conversation from "lose weight" to "optimize metabolism." Position the product as addressing blood sugar regulation, mitochondrial efficiency, and inflammation — the real mechanisms behind weight management. Buyers feel smart, not shamed.',
+    brands: ['Pendulum', 'Supergut', 'Levels', '+O'],
+    hooks: [
+      { text: 'You\'re not eating too much. Your metabolism is just 40% less efficient than it was at 25.', desc: 'Removes personal blame and replaces it with biology — powerful for frustrated dieters.', body: 'After 30, mitochondrial density declines, insulin sensitivity drops, and your gut bacteria shifts toward a more inflammatory profile. It\'s not willpower. It\'s cellular function. [Product] was formulated to address all three.' },
+      { text: 'The weight that won\'t budge? It might be inflammation, not calories.', desc: 'Novel reframe that challenges the calories-in/out dogma — deeply resonant with people who "do everything right."', body: 'Chronic low-grade inflammation suppresses fat metabolism and disrupts hunger hormones. If you\'re eating clean and training hard but the scale won\'t move, inflammation is usually the culprit. [Product] contains three clinically studied anti-inflammatory compounds shown to support metabolic reset.' },
+      { text: 'I stopped counting calories and started counting microbiome strains. Lost 22 lbs.', desc: 'Paradigm-shifting personal story with a specific, credible result.', body: 'Turns out the bacteria in your gut control how you metabolize calories. Two people eating identical diets can have wildly different metabolic responses based on their microbiome composition. [Product] shifts yours toward the lean, anti-inflammatory profile.' },
+      { text: 'Your blood sugar spikes are making you store fat. Even from "healthy" foods.', desc: 'Creates urgency by implicating foods the buyer believes are safe — and offering a simple solution.', body: 'Post-meal blood sugar spikes trigger insulin surges, which signal your body to store fat and crave more carbs. [Product] contains Akkermansia and other clinically studied strains that improve glucose metabolism and reduce insulin response.' },
+    ],
+    ctas: ['Optimize My Metabolism', 'Fix the Root Cause', 'Start the Protocol', 'Shop Science-Backed'],
+    formats: ['Explainer Ad', 'UGC Testimonial', 'Educational Reel'], platforms: ['Facebook', 'Instagram', 'YouTube'], audiences: ['Weight-Conscious Adults', 'Metabolic Health Seekers', '30+ Adults'], tones: ['Educational', 'Empathetic', 'Scientific']
+  },
+
+  // ── LONGEVITY & BRAIN ────────────────────────────────────────
+  {
+    id: 'longevity', name: 'Longevity & Anti-Aging', emoji: '🧬', cat: 'longevity',
+    color: '#5e5ce6', light: 'rgba(94,92,230,0.10)', gs: '#5e5ce6', ge: '#af52de',
+    tag: '+O Style', tagBg: 'rgba(94,92,230,0.12)', tagC: '#3634a3',
+    stars: '★★★★☆', desc: 'Position supplements in the growing biohacking & longevity space. The buyer wants to be younger, longer.',
+    strategy: 'Longevity Science Positioning', stratDesc: 'The longevity market is exploding. Lead with cutting-edge science (NAD+, senolytics, telomere health) presented accessibly. Your buyer is not a passive health consumer — they\'re an active optimizer who reads PubMed and tracks their HRV.',
+    brands: ['+O', 'Tru Niagen', 'Elysium', 'Timeline Nutrition'],
+    hooks: [
+      { text: 'Bryan Johnson is spending $2M a year to live to 150. Here\'s the $49/month version.', desc: 'Piggybacking on the world\'s most famous longevity experiment — makes cutting-edge science accessible.', body: 'The longevity research that used to require a billionaire\'s budget is now available in supplement form. [Product] contains clinically studied doses of the same compounds featured in Stanford and Harvard longevity trials — without the $2M price tag.' },
+      { text: 'Your biological age and your chronological age don\'t have to match.', desc: 'Opens the possibility that aging is a controllable variable — the most powerful frame in longevity marketing.', body: 'NAD+ levels drop 50% between ages 20 and 50. That decline is directly linked to energy production, DNA repair, and cognitive function. [Product] contains the precursors your body needs to rebuild its own NAD+ — the molecule longevity researchers are most excited about.' },
+      { text: 'The next 10 years will tell you whether you invested in your health or just spent money on healthcare.', desc: 'Future-pacing frame that creates urgency without being fear-based.', body: 'The science of aging has changed more in the last 5 years than in the previous 50. We now know which cellular processes drive aging — and we know some of them can be modulated with targeted nutrition. [Product] was built on this research.' },
+      { text: 'I started tracking my biological age. Then I started hacking it.', desc: 'Biohacking identity framing — speaks to data-driven self-optimizers who love metrics.', body: 'Epigenetic clocks. VO2 max. HRV. If you\'re tracking your health data, you already know that the number on your birthday cake is the least interesting number in the room. [Product] is the supplement protocol built for people who take this seriously.' },
+    ],
+    ctas: ['Start the Protocol', 'Invest in Longevity', 'Hack My Biological Age', 'Shop the Stack'],
+    formats: ['Educational Video', 'Cinematic Ad', 'Expert Interview Clip'], platforms: ['YouTube', 'Instagram', 'LinkedIn'], audiences: ['Biohackers 30+', 'High-Income Adults', 'Data-Driven Optimizers'], tones: ['Scientific', 'Premium', 'Intelligent']
+  },
+  {
+    id: 'nootropic', name: 'Brain Performance', emoji: '🧠', cat: 'longevity',
+    color: '#ff2d55', light: 'rgba(255,45,85,0.10)', gs: '#ff2d55', ge: '#5e5ce6',
+    tag: 'Madmaniq Style', tagBg: 'rgba(255,45,85,0.12)', tagC: '#a81e38',
+    stars: '★★★★☆', desc: 'Position cognitive supplements for the productivity-obsessed modern professional who lives in their head.',
+    strategy: 'Cognitive Edge & Mental Performance', stratDesc: 'Madmaniq and top nootropic brands target the "knowledge worker" identity — people who earn with their brain and treat cognitive performance like athletes treat their body. Lead with productivity outcomes, not supplement facts.',
+    brands: ['Madmaniq', 'Alpha Brain', 'Qualia Mind', 'HVMN'],
+    hooks: [
+      { text: 'Your brain is your most valuable asset. You protect your portfolio. Why not this?', desc: 'Investment metaphor that resonates deeply with ambitious professionals.', body: 'You\'d never neglect your investments. But most high-performers run their most important asset — their brain — on caffeine, cortisol, and hope. [Product] was formulated by neuroscientists for the people who can\'t afford off days.' },
+      { text: 'I have 8-hour focus blocks now. I used to max out at 90 minutes.', desc: 'Specific cognitive outcome that every knowledge worker desperately wants.', body: 'Deep work is the highest-value activity in the modern economy. And it\'s becoming rarer. The ability to focus for 3-4 hours without distraction is worth more than almost any other skill. [Product] optimizes the neurochemistry that makes deep work possible.' },
+      { text: 'The sharpest people in the room are usually supplementing their cognition. Quietly.', desc: 'Insider knowledge + aspiration — makes the buyer feel like they\'re about to join an elite group.', body: 'Top CEOs, elite traders, and competitive academics don\'t talk about their cognitive stacks publicly. But they use them. [Product] contains clinically validated nootropics in therapeutic doses — not the trace amounts most supplements hide behind a proprietary blend.' },
+      { text: 'Brain fog is not a lifestyle. It\'s a solvable biology problem.', desc: 'Reframes a common frustration as a fixable issue rather than a permanent state.', body: 'Neuroinflammation, acetylcholine depletion, and poor cerebral blood flow are the three most common causes of chronic brain fog. [Product] addresses all three with compounds that cross the blood-brain barrier and have been validated in double-blind trials.' },
+    ],
+    ctas: ['Unlock My Focus', 'Upgrade My Brain', 'Start the Protocol', 'Think Sharper'],
+    formats: ['Educational UGC', 'Productivity Lifestyle', 'Expert Clip'], platforms: ['Instagram', 'LinkedIn', 'YouTube'], audiences: ['Entrepreneurs', 'Professionals 25-45', 'Students'], tones: ['Ambitious', 'Scientific', 'Premium']
+  },
+
+  // ── UNIVERSAL ────────────────────────────────────────────────
+  {
+    id: 'social_proof', name: 'Social Proof & Reviews', emoji: '⭐', cat: 'all',
+    color: '#ff9f0a', light: 'rgba(255,159,10,0.10)', gs: '#ff9f0a', ge: '#ff3b30',
+    tag: 'Universal Winner', tagBg: 'rgba(255,159,10,0.12)', tagC: '#a86800',
+    stars: '★★★★★', desc: 'Let real customers and real numbers do the heavy lifting. Works for every supplement category.',
+    strategy: 'Volume Social Proof + Specificity', stratDesc: 'Pair large numbers (100,000 customers) with hyper-specific testimonials (not "I feel better" but "my blood pressure dropped 14 points in 6 weeks"). Specific claims with real names and photos dramatically outperform generic testimonials.',
+    brands: ['AG1', 'Hims', 'Ritual', 'Supergut'],
+    hooks: [
+      { text: '"I\'ve tried every supplement on the market. I\'ll never switch from this one."', desc: 'The anti-churn testimonial — implies exhaustive research and a definitive conclusion.', body: 'This is what we hear most. Not "it\'s pretty good" or "I\'ve noticed a difference." It\'s "this is the one I\'m on for life." 94% of subscribers reorder after month one. That\'s not marketing — that\'s retention data.' },
+      { text: '312,000 subscribers. Here\'s why 89% of them never cancel.', desc: 'Volume + retention rate = two proof points in one sentence that signals something extraordinary is happening.', body: 'We surveyed 10,000 customers on why they stay. The top three answers: energy that lasts the whole day (78%), better sleep (71%), and visible changes within 30 days (64%). This is not a coincidence — this is formulation science.' },
+      { text: 'A doctor started recommending us to patients. We asked why.', desc: 'Third-party expert endorsement delivered in a humble, non-braggy way.', body: '"I started recommending [Product] when I noticed patients asking me what to do about their energy and gut symptoms between appointments. The formulation is evidence-based in a category that\'s mostly noise." — [Dr. Name, MD, Functional Medicine]' },
+      { text: 'This review made our team cry. Sharing with permission.', desc: 'Emotional testimonial setup that makes the viewer want to see the review immediately.', body: '"I bought this for energy, honestly expecting nothing. Three weeks in I started sleeping through the night for the first time in four years. I have two kids under 5. This has changed my life." — Sarah M., verified buyer' },
+    ],
+    ctas: ['Join 300K+ Customers', 'Read the Reviews', 'See Why They Stay', 'Start My Trial'],
+    formats: ['Testimonial Reel', 'UGC Compilation', 'Static Quote Card'], platforms: ['Facebook', 'Instagram', 'TikTok'], audiences: ['Cold Traffic', 'Skeptical Buyers', 'All Ages'], tones: ['Authentic', 'Warm', 'Trust-Building']
+  },
+  {
+    id: 'risk_reversal', name: 'Risk-Free Guarantee', emoji: '🛡️', cat: 'all',
+    color: '#34c759', light: 'rgba(52,199,89,0.10)', gs: '#34c759', ge: '#0071e3',
+    tag: 'Objection Killer', tagBg: 'rgba(52,199,89,0.12)', tagC: '#1a7a32',
+    stars: '★★★★★', desc: 'For supplements, the guarantee IS the ad. The bolder it is, the more it implies the product actually works.',
+    strategy: 'Bold Guarantee as Proof of Confidence', stratDesc: 'When you put your money where your formulation is, it signals confidence that no claim can replicate. Lead with the guarantee, not the product. A 90-day money-back guarantee on a supplement screams: "we know it works or we wouldn\'t make this offer."',
+    brands: ['AG1', 'Hims', 'Ritual', 'David Protein'],
+    hooks: [
+      { text: 'Try it for 90 days. If you don\'t feel noticeably different, we\'ll refund every cent. No forms. No BS.', desc: 'Long time horizon + complete removal of purchase friction = near-zero objection to trying.', body: 'We\'ve built our business on repeat customers, not first-time buyers. So we need you to feel the difference before you commit. 90 days. Track your energy, your sleep, your digestion. If nothing changes — we don\'t deserve your money.' },
+      { text: 'We sell a subscription. That only works if the product works. Here\'s our guarantee.', desc: 'Smart business transparency — explaining WHY the guarantee exists makes it feel more genuine.', body: 'Our entire revenue model depends on customers who reorder. That\'s only possible if the product actually delivers. If it doesn\'t, you get your money back. Zero questions. Zero emails required. Just let us know and it\'s done.' },
+      { text: 'We\'ve refunded 1.2% of customers. The other 98.8% are still subscribed.', desc: 'Turning the guarantee into a proof point by referencing how rarely it\'s needed.', body: 'We\'re proud of our refund rate, not embarrassed by it. It means 98.8% of people who give [Product] a genuine 30-day trial decide to stay. That number makes every guarantee we offer feel pretty safe to make.' },
+      { text: 'The supplement industry hides behind "results may vary." We guarantee yours.', desc: 'Direct competitive differentiation — positions the brand as uniquely confident in a category full of asterisks.', body: 'Most supplement companies protect themselves with fine print. We take the opposite approach. If you follow the protocol and don\'t feel a meaningful difference in 60 days, we\'ll give you your money back. Not a credit. Not a coupon. Your money.' },
+    ],
+    ctas: ['Try Risk-Free', 'Claim My Guarantee', 'Start With Zero Risk', 'Get My 90-Day Trial'],
+    formats: ['Direct Response', 'Static', 'Short Video'], platforms: ['Facebook', 'Google', 'Email'], audiences: ['Skeptics', 'First-Time Buyers', 'Price-Sensitive'], tones: ['Confident', 'Transparent', 'Direct']
+  },
+];
+
+// ════════════════════════════════════════════════════════════════
+//  STATE & LOGIC
+// ════════════════════════════════════════════════════════════════
+
+let currentCat = 'all';
+let lastAngleId = null;
+
+function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+function setCategory(cat, btn){
+  currentCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.borderColor = ''; b.style.color = ''; b.style.background = '';
+  });
+  btn.classList.add('active');
+  if(cat === 'all'){ btn.style.borderColor='#30d158'; btn.style.color='#30d158'; btn.style.background='rgba(48,209,88,0.08)'; }
+  else { btn.style.borderColor='#0071e3'; btn.style.color='#0071e3'; btn.style.background='rgba(0,113,227,0.08)'; }
+}
+
+function generateConcept(){
+  const btn = document.getElementById('generateBtn');
+  btn.style.opacity = '0.7';
+  setTimeout(()=>btn.style.opacity='1', 400);
+
+  const pool = currentCat === 'all' ? AD_ANGLES : AD_ANGLES.filter(a => a.cat === currentCat || a.cat === 'all');
+  if(!pool.length) return;
+
+  let angle;
+  do { angle = pick(pool); } while (angle.id === lastAngleId && pool.length > 1);
+  lastAngleId = angle.id;
+
+  const hook = pick(angle.hooks);
+  const cta  = pick(angle.ctas);
+  const brand = pick(angle.brands || ['Your Brand']);
+
+  document.getElementById('emptyState').style.display = 'none';
+  const el = document.getElementById('conceptResult');
+  el.classList.remove('visible');
+
+  setTimeout(()=>{
+    document.getElementById('cardTitle').textContent = `Ad Concept — ${angle.name}`;
+    document.getElementById('inspiredText').textContent = `Inspired by ${brand} playbook`;
+
+    const badge = document.getElementById('angleBadge');
+    badge.style.background = angle.light; badge.style.color = angle.color;
+    document.getElementById('bdot').style.background = angle.color;
+    document.getElementById('angleName').textContent = `${angle.emoji}  ${angle.name}`;
+
+    const catLabels = { performance:'💪 Performance', health:'🌿 Daily Health', mens:"🔥 Men's Health", womens:"✨ Women's Wellness", gut:'🦠 Gut Health', longevity:'🧬 Longevity & Brain', all:'⚡ Universal' };
+    document.getElementById('catBadge').textContent = catLabels[angle.cat] || '⚡ Universal';
+
+    document.getElementById('hookText').textContent = hook.text;
+    document.getElementById('hookDesc').textContent = hook.desc;
+    document.getElementById('bodyText').textContent = hook.body;
+    document.getElementById('angleStrategy').textContent = angle.strategy;
+    document.getElementById('angleDesc').textContent = angle.stratDesc;
+    document.getElementById('adFormat').textContent = pick(angle.formats);
+    document.getElementById('adPlatform').textContent = pick(angle.platforms);
+    document.getElementById('adAudience').textContent = pick(angle.audiences);
+    document.getElementById('adTone').textContent = pick(angle.tones);
+    document.getElementById('ctaText').textContent = cta;
+
+    const ctaBlock = document.getElementById('ctaBlock');
+    ctaBlock.style.background = `linear-gradient(135deg, ${angle.gs} 0%, ${angle.ge} 100%)`;
+
+    document.getElementById('copyAllBtn').style.display = 'inline-flex';
+    document.getElementById('regenBtn').style.display   = 'inline-flex';
+    el.classList.add('visible');
+  }, 90);
+}
+
+function copyCTA(){
+  const t = document.getElementById('ctaText').textContent;
+  navigator.clipboard.writeText(t).then(()=>showToast('CTA copied!'));
+}
+
+function copyAll(){
+  const h = document.getElementById('hookText').textContent;
+  const b = document.getElementById('bodyText').textContent;
+  const s = document.getElementById('angleStrategy').textContent;
+  const c = document.getElementById('ctaText').textContent;
+  const f = document.getElementById('adFormat').textContent;
+  const p = document.getElementById('adPlatform').textContent;
+  const a = document.getElementById('adAudience').textContent;
+  const to = document.getElementById('adTone').textContent;
+  const text = `SUPPLEMENT AD CONCEPT\n\nHOOK:\n${h}\n\nBODY COPY DIRECTION:\n${b}\n\nANGLE STRATEGY:\n${s}\n\nFORMAT: ${f}  |  PLATFORM: ${p}  |  AUDIENCE: ${a}  |  TONE: ${to}\n\nCTA:\n${c}`;
+  navigator.clipboard.writeText(text).then(()=>showToast('Full concept copied!'));
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+function scrollTo(id, el){
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+  document.querySelectorAll('.nav-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function useAngle(id){
+  const angle = AD_ANGLES.find(a=>a.id===id);
+  if(!angle) return;
+  lastAngleId = null;
+  const hook = pick(angle.hooks);
+  const cta  = pick(angle.ctas);
+  const brand= pick(angle.brands||['Your Brand']);
+  lastAngleId = id;
+
+  document.getElementById('emptyState').style.display = 'none';
+  const el = document.getElementById('conceptResult');
+  el.classList.remove('visible');
+
+  setTimeout(()=>{
+    document.getElementById('cardTitle').textContent = `Ad Concept — ${angle.name}`;
+    document.getElementById('inspiredText').textContent = `Inspired by ${brand} playbook`;
+    const badge = document.getElementById('angleBadge');
+    badge.style.background = angle.light; badge.style.color = angle.color;
+    document.getElementById('bdot').style.background = angle.color;
+    document.getElementById('angleName').textContent = `${angle.emoji}  ${angle.name}`;
+    const catLabels = { performance:'💪 Performance', health:'🌿 Daily Health', mens:"🔥 Men's Health", womens:"✨ Women's Wellness", gut:'🦠 Gut Health', longevity:'🧬 Longevity & Brain', all:'⚡ Universal' };
+    document.getElementById('catBadge').textContent = catLabels[angle.cat] || '⚡ Universal';
+    document.getElementById('hookText').textContent = hook.text;
+    document.getElementById('hookDesc').textContent = hook.desc;
+    document.getElementById('bodyText').textContent = hook.body;
+    document.getElementById('angleStrategy').textContent = angle.strategy;
+    document.getElementById('angleDesc').textContent = angle.stratDesc;
+    document.getElementById('adFormat').textContent = pick(angle.formats);
+    document.getElementById('adPlatform').textContent = pick(angle.platforms);
+    document.getElementById('adAudience').textContent = pick(angle.audiences);
+    document.getElementById('adTone').textContent = pick(angle.tones);
+    document.getElementById('ctaText').textContent = cta;
+    document.getElementById('ctaBlock').style.background = `linear-gradient(135deg, ${angle.gs} 0%, ${angle.ge} 100%)`;
+    document.getElementById('copyAllBtn').style.display = 'inline-flex';
+    document.getElementById('regenBtn').style.display   = 'inline-flex';
+    el.classList.add('visible');
+  }, 90);
+
+  document.getElementById('generator').scrollIntoView({behavior:'smooth'});
+  showToast(`${angle.emoji} Using "${angle.name}" angle`);
+}
+
+// ── RENDER GRIDS ──────────────────────────────────────────────────
+
+function renderAnglesGrid(){
+  document.getElementById('anglesGrid').innerHTML = AD_ANGLES.map(a=>`
+    <div class="angle-card" style="--cs:${a.gs};--ce:${a.ge}" onclick="useAngle('${a.id}')">
+      <div class="angle-card-icon" style="background:${a.light}">${a.emoji}</div>
+      <h3>${a.name}</h3>
+      <p>${a.desc}</p>
+      <div class="angle-card-footer">
+        <span class="angle-tag" style="background:${a.tagBg};color:${a.tagC}">${a.tag}</span>
+        <span class="angle-strength" style="color:${a.color}">${a.stars}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderBrandsGrid(){
+  document.getElementById('brandsGrid').innerHTML = BRAND_INTEL.map(b=>`
+    <div class="brand-card">
+      <div class="brand-card-name">${b.name}</div>
+      <div class="brand-card-category">${b.category}</div>
+      <span class="brand-card-angle" style="background:${b.bg};color:${b.color}">${b.angle}</span>
+      <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);line-height:1.5">${b.signature}</div>
+    </div>
+  `).join('');
+}
+
+renderAnglesGrid();
+renderBrandsGrid();
+</script>
+</body>
+</html>
